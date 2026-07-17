@@ -35,9 +35,63 @@ echo "======================================================="
 # Lösche den alten lokalen www-Ordner, falls er existiert
 rm -rf ./www
 
-# Kopiert /minetest-wasm/www aus dem Container direkt in dein lokales Verzeichnis
-docker run --rm --entrypoint "" -v "$(pwd):/host" "${IMAGE_NAME}:${TAG}" cp -r /minetest-wasm/www /host/
+# Kopiert /luanti-wasm/www aus dem Container direkt in dein lokales Verzeichnis
+docker run --rm --entrypoint "" -v "$(pwd):/host" "${IMAGE_NAME}:${TAG}" cp -r /luanti-wasm/www /host/
 
 echo "======================================================="
-echo " Fertig! Die Web-Dateien liegen jetzt in ./www/"
+echo " Extrahiere Release UUID aus www-Struktur..."
 echo "======================================================="
+
+# --- 3. UUID aus der www-Verzeichnisstruktur auslesen ---
+# Erwartet: www/{12-char-uuid}/luanti.js
+RELEASE_UUID=""
+for dir in www/*/; do
+  if [ -f "${dir}luanti.js" ]; then
+    RELEASE_UUID=$(basename "$dir")
+    echo "=> Gefundene UUID: $RELEASE_UUID"
+    break
+  fi
+done
+
+if [ -z "$RELEASE_UUID" ]; then
+  echo "ERROR: Konnte UUID nicht ermitteln. Struktur sollte sein: www/{UUID}/luanti.js"
+  exit 1
+fi
+
+echo "======================================================="
+echo " Führe Vite Frontend-Generator aus..."
+echo "======================================================="
+
+# --- 4. Vite aufrufen mit UUID als Environment-Variable ---
+cd custom_frontend
+
+# Stelle sicher, dass node_modules existiert
+if [ ! -d "node_modules" ]; then
+  echo "=> Installiere Dependencies..."
+  npm install --no-save
+fi
+
+# Kopiere www-Verzeichnis in custom_frontend/www (für Vite Input)
+cp -r ../www ./www-build 2>/dev/null || true
+
+# Vite ausführen - generiert neue index.html, kopiert static files
+echo "=> Vite generiert index.html mit UUID: $RELEASE_UUID"
+RELEASE_UUID="$RELEASE_UUID" npm run build
+
+# Neue www vom Vite-Output zurück in Root kopieren
+rm -rf ../www
+cp -r dist ../www
+
+# Aufräumen
+rm -rf www-build dist
+
+cd ..
+
+echo "======================================================="
+echo " ✓ Fertig! Frontend optimiert und bereit."
+echo "======================================================="
+echo "Release UUID: $RELEASE_UUID"
+echo "Output: ./www/"
+echo ""
+echo "Struktur:"
+find ./www -type f -name "*.js" -o -name "*.html" -o -name "*.wasm" | head -10
