@@ -1,102 +1,107 @@
 <!doctype html>
-<html lang="en-us">
+<html lang="de" class="h-full bg-slate-950 text-slate-100">
   <head>
     <meta charset="utf-8">
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-    <title>Minetest for the Web</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Minetest Web-Launcher</title>
+    <style>
+      @tailwind base;
+      @tailwind components;
+      @tailwind utilities;
+    </style>
   </head>
-  <body style="background-color: black">
-    <div id="temporary_console" class="console" style="color: white"></div>
-    <div id="launch_form" class="console" style="color: white; display: none;">
-      <hr>
-      <b>Select Network Proxy:</b>
-      <select id="select_proxy">
-          <!-- filled by javascript -->
-      </select>
+  <body class="h-full flex flex-col items-center justify-center p-4 antialiased selection:bg-emerald-500 selection:text-slate-950">
 
-      <br/>
+    <!-- Haupt-Container -->
+    <main class="w-full max-w-md bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl overflow-hidden p-6 md:p-8 transition-all duration-300">
+      
+      <!-- Header -->
+      <header class="text-center mb-8">
+        <h1 class="text-3xl font-extrabold tracking-tight bg-gradient-to-r from-emerald-400 to-teal-500 bg-clip-text text-transparent">
+          Minetest
+        </h1>
+        <p class="text-sm text-slate-400 mt-1">Web Edition Launcher</p>
+      </header>
 
-      <b>Select language:</b>
-      <select id="select_language">
-          <!-- filled by javascript -->
-      </select>
+      <!-- 1. STARTUP / LADEBILDSCHIRM -->
+      <div id="loading_screen" class="flex flex-col items-center justify-center py-8 space-y-6">
+        <!-- Fortschritts-Text / Status -->
+        <div class="text-center space-y-1">
+          <p id="status_task" class="text-emerald-400 font-medium tracking-wide animate-pulse">Initialisiere Launcher...</p>
+          <p id="status_percent" class="text-5xl font-black text-slate-200">0%</p>
+        </div>
+        
+        <!-- Visueller Ladebalken -->
+        <div class="w-full h-3 bg-slate-800 rounded-full overflow-hidden p-0.5 border border-slate-700/50">
+          <div id="loading_bar" class="h-full bg-gradient-to-r from-emerald-500 to-teal-400 rounded-full transition-all duration-200 ease-out" style="width: 0%"></div>
+        </div>
+      </div>
 
-    <hr>
-    <button id="launch" style="width: 300px; height: 50px; font-size: 20pt;">Launch Minetest</button>
+      <!-- 2. LAUNCH FORMULAR (Standardmäßig ausgeblendet, bis mtl bereit ist) -->
+      <div id="launch_form" class="hidden space-y-6">
+        
+        <!-- Proxy Auswahl -->
+        <div class="space-y-2">
+          <label for="select_proxy" class="block text-xs font-semibold uppercase tracking-wider text-slate-400">
+            Netzwerk-Proxy
+          </label>
+          <select id="select_proxy" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-slate-200 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition cursor-pointer">
+            <!-- Wird via JS befüllt -->
+          </select>
+        </div>
 
-<div id="minetest-container" style="display: none;">
+        <!-- Sprache Auswahl -->
+        <div class="space-y-2">
+          <label for="select_language" class="block text-xs font-semibold uppercase tracking-wider text-slate-400">
+            Sprache / Language
+          </label>
+          <select id="select_language" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-slate-200 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition cursor-pointer">
+            <!-- Wird via JS befüllt -->
+          </select>
+        </div>
 
-    <br/>
-    <hr>
-    <b style="font-size: 20pt;">Run Server In Browser</b>
-    <br/>
-    <b>Player Name:</b>
-    <input style="border: 2px solid black; width: 400px; height: 2em" type="text" id="multiplayer_username" required="" pattern="[A-Za-z0-9_-]{1,20}" maxlength="19" title="Alphanumeric, 19 characters max">
-    <br/>
-    <b>Game:</b>
-    <select id="multiplayer_game">
-        <option value="minetest_game">minetest_game</option>
-    </select>
-    <br/>
-    <span>After launch, copy the URL and use it to open clients.</span>
-    <br/>
-    <span>Closing this page shuts down the server and ends the game.</span>
-    <br/>
-    <button id="launch_server" style="width: 300px; height: 50px; font-size: 20pt;">Launch Server</button>
-</div>
+        <!-- Trennlinie & Launch Button -->
+        <div class="pt-4 border-t border-slate-850">
+          <button id="launch" class="w-full bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 font-bold text-lg py-4 px-6 rounded-xl shadow-lg shadow-emerald-500/10 hover:shadow-emerald-400/20 active:scale-[0.98] transition transform duration-155">
+            Spiel starten
+          </button>
+        </div>
+      </div>
 
-    </div>
-    <div id="join_form" class="console" style="color: white; display: none;">
-      <b>Joining game:</b>
-      <br/>
-      <b>Player Name:</b>
-      <input style="border: 2px solid black; width: 400px; height: 2em" type="text" id="join_username" required="" pattern="[A-Za-z0-9_-]{1,20}" maxlength="19" title="Alphanumeric, 19 characters max">
-      <br/>
-      <button id="join_launch">Join Game</button>
-    </div>
+      <!-- 3. ERROR ANZEIGE -->
+      <div id="error_screen" class="hidden bg-red-950/40 border border-red-900/50 rounded-xl p-4 text-center space-y-2">
+        <p class="text-sm font-bold text-red-400 uppercase tracking-wider">Kritischer Fehler</p>
+        <p id="error_message" class="text-xs text-red-300 font-mono break-all"></p>
+      </div>
+
+    </main>
+
+    <!-- Scripte -->
     <script type="text/javascript" src="wasm/launcher.js"></script>
     <script type="text/javascript">
-
-      // Reduce memory and network usage
-      function enableMemorySaving(mtl) {
-          mtl.setConf('viewing_range', 85);
-          mtl.setConf('max_block_send_distance', 5);
-          mtl.setConf('max_block_generate_distance', 5);
-      }
-
+      const loadingScreen = document.getElementById('loading_screen');
       const launchForm = document.getElementById('launch_form');
-      const joinForm = document.getElementById('join_form');
-      const tcon = document.getElementById('temporary_console');
-      function tcon_print(prefix, line) {
-          if (prefix) {
-              for (child of tcon.childNodes) {
-                  if (child.nodeName == 'PRE' && child.innerText.startsWith(prefix)) {
-                      child.innerText = prefix + line;
-                      return;
-                  }
-              }
-          }
-          const p = document.createElement('pre');
-          p.innerText = prefix + line;
-          tcon.appendChild(p);
-      }
+      const errorScreen = document.getElementById('error_screen');
+      
+      const statusTask = document.getElementById('status_task');
+      const statusPercent = document.getElementById('status_percent');
+      const loadingBar = document.getElementById('loading_bar');
+      const errorMessage = document.getElementById('error_message');
 
       function wipePage() {
-          launchForm.remove();
-          joinForm.remove();
-          tcon.remove();
+          // Blendet das gesamte UI-Fenster vor dem eigentlichen Canvas-Start aus
+          document.querySelector('main').remove();
       }
 
       function enableLaunchForm() {
-          if (join_code) {
-              joinForm.style.display = 'block';
-          } else {
-              launchForm.style.display = 'block';
-          }
+          // Ladebildschirm weg, Formular sanft einblenden
+          loadingScreen.remove();
+          launchForm.classList.remove('hidden');
 
           const select_proxy = document.getElementById('select_proxy');
           const proxies = [
-              [ "wss://eu1.dustlabs.io/mtproxy", "Europe" ],
+              [ "wss://eu1.dustlabs.io/mtproxy", "Europa (Standard)" ],
           ];
           proxies.forEach((entry, index) => {
               const opt = document.createElement('option');
@@ -123,129 +128,34 @@
               mtl.setLang(select_language.value);
               mtl.launch(args);
           });
-
-          const launchServer = document.getElementById('launch_server');
-          launchServer.addEventListener('click', async () => {
-              const proxyIndex = document.getElementById('select_proxy').value;
-              const username = document.getElementById('multiplayer_username').value;
-              const game = document.getElementById('multiplayer_game').value;
-              if (username.length == 0) {
-                  alert("Empty username");
-                  return;
-              }
-              wipePage();
-
-              const proxy = proxies[proxyIndex][0];
-              mtl.setProxy(proxy);
-              mtl.addPack(game);
-              const [cmd, serverCode, clientCode] = await queryProxy(`MAKEVPN ${game}`, proxy);
-              if (cmd != 'NEWVPN') {
-                  alert("Invalid response from proxy");
-                  return;
-              }
-              const args = new MinetestArgs();
-              args.extra.push('--withserver');
-              args.gameid = game;
-              args.name = username;
-              args.address = '127.0.0.1';
-              args.port = 30000;
-              args.go = true;
-              history.pushState({}, "", `?proxy=${proxyIndex}&game=${game}&join=${clientCode}`);
-              mtl.setVPN(serverCode, clientCode);
-              enableMemorySaving(mtl);
-              mtl.setLang(select_language.value);
-              mtl.launch(args);
-          });
-
-          const joinLaunch = document.getElementById('join_launch');
-          joinLaunch.addEventListener('click', async () => {
-              const username = document.getElementById('join_username').value;
-              if (username.length == 0) {
-                  alert("Empty username");
-                  return;
-              }
-              wipePage();
-              mtl.setProxy(proxies[join_proxy][0]);
-              mtl.addPack(join_game);
-
-              const args = new MinetestArgs();
-              args.gameid = join_game;
-              args.name = username;
-              args.address = '172.16.0.1';
-              args.port = 30000;
-              args.go = true;
-              mtl.setVPN(null, join_code);
-              enableMemorySaving(mtl);
-              mtl.setLang(select_language.value);
-              mtl.launch(args);
-          });
-      }
-
-      function queryProxy(cmd, proxy) {
-          return new Promise((resolve, reject) => {
-              let finished = false;
-              const ws = new WebSocket(proxy);
-              ws.addEventListener('open', (event) => {
-                  ws.send(cmd);
-              });
-              ws.addEventListener('error', (event) => {
-                  alert('Error initiating proxy connection');
-                  finished = true;
-                  reject(new Error('Received error'));
-              });
-              ws.addEventListener('close', (event) => {
-                  if (!finished) {
-                      alert('Proxy connection closed unexpectedly');
-                      finished = true;
-                      reject(new Error('Received close'));
-                  }
-              });
-              ws.addEventListener('message', (event) => {
-                  if (typeof event.data !== 'string') {
-                      alert('Invalid message received from proxy');
-                      finished = true;
-                      reject(new Error('Invalid message'));
-                      return;
-                  }
-                  finished = true;
-                  ws.close();
-                  resolve(event.data.split(' '));
-              });
-          });
-      }
-
-      let join_code = null;
-      let join_proxy = null;
-      let join_game = null;
-      const peek_params = new URLSearchParams(window.location.search);
-      if (peek_params.has("join")) {
-          join_code = peek_params.get("join");
-          join_game = peek_params.get("game");
-          join_proxy = peek_params.get("proxy");
       }
 
       const args = MinetestArgs.fromQueryString(window.location.search);
-      tcon_print("", "Minetest Arguments: " + JSON.stringify(args.toArray(), null, '    '));
-      tcon_print("", "Data Packs: " + JSON.stringify(args.packs, null, '    '));
-
       const mtl = new MinetestLauncher();
       mtl.addPacks(args.packs);
+
       mtl.onprint = (text) => {
-          tcon_print("", text);
+          console.log("[Minetest]", text);
       };
+
+      // Fortschritt an den neuen Ladebalken übergeben
       mtl.onprogress = (name, progress) => {
-          const prefix = `Task ${name} : `;
-          const pct = `${Math.round(progress * 100)}%`;
-          tcon_print(prefix, pct);
+          const pctValue = Math.round(progress * 100);
+          statusTask.innerText = `Lade Asset: ${name}...`;
+          statusPercent.innerText = `${pctValue}%`;
+          loadingBar.style.width = `${pctValue}%`;
       };
+
       mtl.onready = () => {
-          tcon_print("", "READY!");
           enableLaunchForm();
       };
+
       mtl.onerror = (err) => {
-          tcon_print("", "**************** FATAL ERROR ******************");
-          tcon_print("", err);
-          tcon_print("", "***********************************************");
+          loadingScreen.classList.add('hidden');
+          launchForm.classList.add('hidden');
+          errorScreen.classList.remove('hidden');
+          errorMessage.innerText = err;
+          console.error(err);
       };
     </script>
   </body>
