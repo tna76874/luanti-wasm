@@ -28,30 +28,4 @@ ENV EMSDK="/minetest-wasm/emsdk"
 ENV PATH="/minetest-wasm/emsdk:/minetest-wasm/emsdk/upstream/emscripten:/minetest-wasm/emsdk/node/22.16.0_64bit/bin:${PATH}"
 ENV EMSDK_NODE="/minetest-wasm/emsdk/node/22.16.0_64bit/bin/node"
 
-RUN emcc --clear-cache --clear-ports
-
-RUN ./fetch_sources.sh
-
-RUN ./build_zlib.sh
-
-RUN ./build_libjpeg.sh
-
-RUN ./build_libpng.sh
-
-RUN ./build_libogg.sh
-
-RUN ./build_libvorbis.sh
-
-RUN ./build_freetype.sh
-
-RUN ./build_zstd.sh
-
-RUN ./build_libarchive.sh
-
-RUN ./build_sqlite3.sh
-
-RUN ./build_webshims.sh
-
-RUN ./build_openssl.sh
-
-RUN ./build_curl.sh
+RUN ./build_all.sh
