@@ -1,0 +1,57 @@
+FROM ubuntu:22.04
+
+# 1. System-Abhängigkeiten installieren
+RUN apt-get update && DEBIAN_FRONTEND=noninteractive TZ=Etc/UTC apt-get install -y \
+    wget \
+    python3 \
+    git \
+    ca-certificates \
+    build-essential \
+    cmake \
+    tclsh \
+    zip \
+    zstd \
+    gettext \
+    && rm -rf /var/lib/apt/lists/*
+
+# Arbeitsverzeichnis festlegen
+WORKDIR /minetest-wasm
+
+# 2. Das originale Repository direkt von GitHub klonen
+RUN git clone https://github.com/paradust7/minetest-wasm.git .
+
+# 3. EMSDK installieren & Patches anwenden
+RUN ./install_emsdk.sh
+
+# GLOBAL ENVIRONMENTAL VARIABLES FOR EMSDK
+ENV EMSDK="/minetest-wasm/emsdk"
+ENV PATH="/minetest-wasm/emsdk:/minetest-wasm/emsdk/upstream/emscripten:/minetest-wasm/emsdk/node/22.16.0_64bit/bin:${PATH}"
+ENV EMSDK_NODE="/minetest-wasm/emsdk/node/22.16.0_64bit/bin/node"
+
+RUN emcc --clear-cache --clear-ports
+
+RUN ./fetch_sources.sh
+
+RUN ./build_zlib.sh
+
+RUN ./build_libjpeg.sh
+
+RUN ./build_libpng.sh
+
+RUN ./build_libogg.sh
+
+RUN ./build_libvorbis.sh
+
+RUN ./build_freetype.sh
+
+RUN ./build_zstd.sh
+
+RUN ./build_libarchive.sh
+
+RUN ./build_sqlite3.sh
+
+RUN ./build_webshims.sh
+
+RUN ./build_openssl.sh
+
+RUN ./build_curl.sh

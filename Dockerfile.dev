@@ -1,0 +1,18 @@
+FROM minetest-wasm-base
+
+WORKDIR /minetest-wasm
+
+# Wir kopieren den aktuellen Stand aus dem unberührten Submodul
+COPY minetest-wasm/ .
+
+# Überschreibe die originalen Frontend-Dateien mit deinen Custom-Dateien
+COPY custom_frontend/static/ ./static/
+
+# Baue nur noch die finalen Schritte
+RUN /bin/bash -c " \
+    source common.sh && \
+    ./build_minetest.sh && \
+    ./build_fsroot.sh && \
+    ./build_www.sh"
+
+CMD ["echo", "Build completed!"]
