@@ -15,7 +15,7 @@ IMAGE_NAME="ghcr.io/${GITHUB_REPOSITORY}-builder"
 TAG="latest"
 
 echo "======================================================="
-echo " Suche nach fertigem Image: ${IMAGE_NAME}:${TAG}"
+echo " 1/4 Suche nach fertigem Image: ${IMAGE_NAME}:${TAG}"
 echo "======================================================="
 
 # --- 2. Versuchen das Image zu pullen, andernfalls lokal bauen ---
@@ -28,8 +28,9 @@ else
   echo "-------------------------------------------------------"
 fi
 
+echo ""
 echo "======================================================="
-echo " Kopiere fertiges Web-Verzeichnis (www) auf den Host..."
+echo " 2/4 Kopiere fertiges Web-Verzeichnis (www) auf Host..."
 echo "======================================================="
 
 # Lösche den alten lokalen www-Ordner, falls er existiert
@@ -38,8 +39,11 @@ rm -rf ./www
 # Kopiert /luanti-wasm/www aus dem Container direkt in dein lokales Verzeichnis
 docker run --rm --entrypoint "" -v "$(pwd):/host" "${IMAGE_NAME}:${TAG}" cp -r /luanti-wasm/www /host/
 
+echo "=> www/ extrahiert"
+
+echo ""
 echo "======================================================="
-echo " Extrahiere Release UUID aus www-Struktur..."
+echo " 3/4 Erkenne Release UUID..."
 echo "======================================================="
 
 # --- 3. UUID aus der www-Verzeichnisstruktur auslesen ---
@@ -58,40 +62,41 @@ if [ -z "$RELEASE_UUID" ]; then
   exit 1
 fi
 
+echo ""
 echo "======================================================="
-echo " Führe Vite Frontend-Generator aus..."
+echo " 4/4 Führe Vite Frontend-Generator aus..."
 echo "======================================================="
 
-# --- 4. Vite aufrufen mit UUID als Environment-Variable ---
-cd custom_frontend
+# --- 4. Vite Docker Image bauen (einmalig) ---
+VITE_IMAGE="${IMAGE_NAME}-vite"
+echo "=> Baue Vite-Generator Image: ${VITE_IMAGE}:latest"
+docker build -t "${VITE_IMAGE}:latest" -f Dockerfile.vite .
 
-# Stelle sicher, dass node_modules existiert
-if [ ! -d "node_modules" ]; then
-  echo "=> Installiere Dependencies..."
-  npm install --no-save
+# --- 5. Vite Container ausführen ---
+echo "=> Vite generiert index.html mit UUID: $RELEASE_UUID"
+docker run --rm \
+  -e RELEASE_UUID="$RELEASE_UUID" \
+  -v "$(pwd)/www:/app/www:ro" \
+  -v "$(pwd)/custom_frontend/dist:/app/dist" \
+  "${VITE_IMAGE}:latest"
+
+# Kopiere Output von custom_frontend/dist nach www
+echo "=> Kopiere Vite-Output zu www/"
+if [ -d "custom_frontend/dist" ]; then
+  # Lösche alte www und ersetze mit neuem Output
+  rm -rf ./www
+  mv custom_frontend/dist ./www
+else
+  echo "ERROR: Vite-Output nicht gefunden!"
+  exit 1
 fi
 
-# Kopiere www-Verzeichnis in custom_frontend/www (für Vite Input)
-cp -r ../www ./www-build 2>/dev/null || true
-
-# Vite ausführen - generiert neue index.html, kopiert static files
-echo "=> Vite generiert index.html mit UUID: $RELEASE_UUID"
-RELEASE_UUID="$RELEASE_UUID" npm run build
-
-# Neue www vom Vite-Output zurück in Root kopieren
-rm -rf ../www
-cp -r dist ../www
-
-# Aufräumen
-rm -rf www-build dist
-
-cd ..
-
+echo ""
 echo "======================================================="
 echo " ✓ Fertig! Frontend optimiert und bereit."
 echo "======================================================="
 echo "Release UUID: $RELEASE_UUID"
 echo "Output: ./www/"
 echo ""
-echo "Struktur:"
-find ./www -type f -name "*.js" -o -name "*.html" -o -name "*.wasm" | head -10
+echo "Dateien:"
+ls -lh ./www/ | tail -5
