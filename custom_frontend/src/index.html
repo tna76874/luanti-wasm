@@ -1,0 +1,210 @@
+<!doctype html>
+<html lang="en-us">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Luanti for the Web</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        background-color: #1a1a1a;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+        color: #fff;
+      }
+
+      #temporary_console {
+        background-color: #0d0d0d;
+        border: 1px solid #333;
+        border-radius: 4px;
+        padding: 12px;
+        margin: 16px;
+        max-height: 400px;
+        overflow-y: auto;
+        font-family: 'Courier New', monospace;
+        font-size: 12px;
+        line-height: 1.4;
+      }
+
+      #temporary_console pre {
+        margin: 4px 0;
+        color: #0f0;
+      }
+
+      #launch_form,
+      #join_form {
+        background-color: #242424;
+        border: 1px solid #404040;
+        border-radius: 8px;
+        padding: 24px;
+        margin: 16px;
+        max-width: 600px;
+      }
+
+      #launch_form h2,
+      #join_form h2 {
+        margin-top: 0;
+        margin-bottom: 16px;
+        font-size: 24px;
+        color: #fff;
+      }
+
+      .form-group {
+        margin-bottom: 16px;
+      }
+
+      .form-group label {
+        display: block;
+        margin-bottom: 6px;
+        font-weight: 500;
+        color: #ccc;
+      }
+
+      .form-group select,
+      .form-group input {
+        width: 100%;
+        padding: 8px 12px;
+        border: 1px solid #404040;
+        border-radius: 4px;
+        background-color: #1a1a1a;
+        color: #fff;
+        font-size: 14px;
+        font-family: inherit;
+      }
+
+      .form-group select:focus,
+      .form-group input:focus {
+        outline: none;
+        border-color: #0f0;
+        box-shadow: 0 0 4px rgba(0, 255, 0, 0.3);
+      }
+
+      button {
+        padding: 12px 24px;
+        background-color: #0f0;
+        color: #000;
+        border: none;
+        border-radius: 4px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+
+      button:hover {
+        background-color: #00dd00;
+        transform: scale(1.05);
+      }
+
+      button:active {
+        transform: scale(0.98);
+      }
+
+      button:disabled {
+        background-color: #666;
+        cursor: not-allowed;
+        transform: none;
+      }
+
+      .button-group {
+        display: flex;
+        gap: 12px;
+        margin-top: 16px;
+      }
+
+      .button-group button {
+        flex: 1;
+      }
+
+      hr {
+        border: none;
+        border-top: 1px solid #404040;
+        margin: 16px 0;
+      }
+
+      .info-text {
+        font-size: 12px;
+        color: #999;
+        margin-top: 8px;
+        line-height: 1.5;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="temporary_console" class="console"></div>
+    
+    <div id="launch_form" style="display: none;">
+      <h2>🎮 Launch Luanti</h2>
+      
+      <div class="form-group">
+        <label for="select_proxy">Network Proxy:</label>
+        <select id="select_proxy"></select>
+      </div>
+
+      <div class="form-group">
+        <label for="select_language">Language:</label>
+        <select id="select_language"></select>
+      </div>
+
+      <button id="launch" style="width: 100%; padding: 14px;">Launch Luanti</button>
+      
+      <hr>
+      <h2 style="font-size: 18px;">🖥️ Run Server in Browser</h2>
+      
+      <div class="form-group">
+        <label for="multiplayer_username">Player Name:</label>
+        <input 
+          type="text" 
+          id="multiplayer_username" 
+          required 
+          pattern="[A-Za-z0-9_-]{1,20}" 
+          maxlength="19" 
+          title="Alphanumeric and _ or -, max 19 characters"
+          placeholder="your_player_name">
+      </div>
+
+      <div class="form-group">
+        <label for="multiplayer_game">Game:</label>
+        <select id="multiplayer_game">
+          <option value="luanti_game">luanti_game</option>
+        </select>
+      </div>
+
+      <p class="info-text">
+        ℹ️ After launch, copy the URL to invite other players.<br>
+        Closing this page shuts down the server.
+      </p>
+
+      <button id="launch_server" style="width: 100%; padding: 14px;">Create Server</button>
+    </div>
+
+    <div id="join_form" style="display: none;">
+      <h2>👥 Join Game</h2>
+      
+      <div class="form-group">
+        <label for="join_username">Player Name:</label>
+        <input 
+          type="text" 
+          id="join_username" 
+          required 
+          pattern="[A-Za-z0-9_-]{1,20}" 
+          maxlength="19"
+          title="Alphanumeric and _ or -, max 19 characters"
+          placeholder="your_player_name">
+      </div>
+
+      <button id="join_launch" style="width: 100%; padding: 14px;">Join Game</button>
+    </div>
+
+    <!-- Scripts geladen vom {UUID}/ Verzeichnis -->
+    <script type="text/javascript">
+      window.__RELEASE_UUID__ = '__RELEASE_UUID__'
+    </script>
+    <script type="text/javascript" src="/__RELEASE_UUID__/launcher.js"></script>
+  </body>
+</html>
