@@ -1,0 +1,17 @@
+FROM node:20-slim
+
+WORKDIR /app
+
+# Copy nur package files
+COPY custom_frontend/package.json custom_frontend/package-lock.json* ./
+
+# Install dependencies
+RUN npm ci --no-progress
+
+# Copy source
+COPY custom_frontend/src ./src
+
+# Default: www wird zur runtime gemountet
+ENV RELEASE_UUID=dev
+
+ENTRYPOINT ["npm", "run", "build"]
