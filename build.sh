@@ -15,45 +15,29 @@ IMAGE_NAME="ghcr.io/${GITHUB_REPOSITORY}-builder"
 TAG="latest"
 
 echo "======================================================="
-echo " Suche nach Builder-Image: ${IMAGE_NAME}:${TAG}"
+echo " Suche nach fertigem Image: ${IMAGE_NAME}:${TAG}"
 echo "======================================================="
 
 # --- 2. Versuchen das Image zu pullen, andernfalls lokal bauen ---
 if docker pull "${IMAGE_NAME}:${TAG}" 2>/dev/null; then
-  echo "=> Erfolg! Vorgebautes Image erfolgreich von GitHub geladen."
+  echo "=> Erfolg! Fertiges Image von GitHub geladen."
 else
-  echo "=> Pull fehlgeschlagen (oder Image existiert noch nicht im GitHub-Repository)."
-  echo "=> Baue das Builder-Image stattdessen lokal..."
+  echo "=> Pull fehlgeschlagen. Baue Image lokal..."
   echo "-------------------------------------------------------"
-  
-  # Führt dein build_docker.sh aus, um das Image lokal zu erzeugen
   ./build_docker.sh
-  
   echo "-------------------------------------------------------"
-  echo "=> Lokaler Image-Build erfolgreich beendet."
 fi
 
 echo "======================================================="
-echo " Bereite Custom-Dateien vor..."
+echo " Kopiere fertiges Web-Verzeichnis (www) auf den Host..."
 echo "======================================================="
 
-# Custom-Frontend-Dateien rüberkopieren (falls vorhanden)
-if [ -d "./custom_frontend/static" ]; then
-  echo "=> Überschreibe originale Web-Dateien mit Custom-Frontend..."
-  mkdir -p ./www/static
-  cp -r ./custom_frontend/static/* ./www/static/ 2>/dev/null || true
-fi
+# Lösche den alten lokalen www-Ordner, falls er existiert
+rm -rf ./www
+
+# Kopiert /minetest-wasm/www aus dem Container direkt in dein lokales Verzeichnis
+docker run --rm --entrypoint "" -v "$(pwd):/host" "${IMAGE_NAME}:${TAG}" cp -r /minetest-wasm/www /host/
 
 echo "======================================================="
-echo " Starte WASM-Build im Container..."
-echo "======================================================="
-
-docker run --rm \
-  -v "$(pwd):/src" \
-  -w /minetest-wasm \
-  "${IMAGE_NAME}:${TAG}" \
-  /bin/bash -c "./build_www.sh"
-
-echo "======================================================="
-echo " Build erfolgreich! Die Web-Dateien liegen in www/"
+echo " Fertig! Die Web-Dateien liegen jetzt in ./www/"
 echo "======================================================="
