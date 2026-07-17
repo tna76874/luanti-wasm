@@ -3,10 +3,10 @@ FROM node:20-slim
 WORKDIR /app
 
 # Copy nur package files
-COPY custom_frontend/package.json custom_frontend/package-lock.json* ./
+COPY custom_frontend/package.json ./
 
-# Install dependencies
-RUN npm ci --no-progress
+# Install dependencies (erzeugt auch package-lock.json)
+RUN npm install --no-progress
 
 # Copy source
 COPY custom_frontend/src ./src
