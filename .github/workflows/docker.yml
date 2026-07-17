@@ -8,16 +8,7 @@ on:
       - stable
     paths:
       - 'build_docker.sh'
-      - '.github/workflows/**'
-      - 'Dockerfile.base'
-      
-  pull_request:
-    branches:
-      - master
-      - main
-    paths:
-      - 'build_docker.sh'
-      - '.github/workflows/**'
+      - '.github/workflows/docker.yml'
       - 'Dockerfile.base'
 
 env:
