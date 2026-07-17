@@ -1,37 +1,42 @@
 #!/bin/bash
 set -e
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd)"
-DIST_DIR="$SCRIPT_DIR/dist"
-
-echo "=== Minetest-WASM Build-Wrapper ==="
-
-# 1. Prüfen, ob das Basis-Image existiert (wenn nicht, einmalig bauen)
-if ! docker image inspect minetest-wasm-base >/dev/null 2>&1; then
-    echo "-> Basis-Image 'minetest-wasm-base' nicht gefunden."
-    echo "   Klone Repository von GitHub und baue Basis-Dependencies im Container..."
-    docker build -t minetest-wasm-base -f Dockerfile.base "$SCRIPT_DIR"
-else
-    echo "-> Verwende existierendes Basis-Image 'minetest-wasm-base'."
+# 1. Repository-Namen für das Builder-Image ermitteln
+if [ -z "$GITHUB_REPOSITORY" ]; then
+  REMOTE_URL=$(git config --get remote.origin.url 2>/dev/null || echo "")
+  if [ -n "$REMOTE_URL" ]; then
+    GITHUB_REPOSITORY=$(echo "$REMOTE_URL" | sed -E 's/.*github.com[:\/](.*)\.git$/\1/')
+  else
+    GITHUB_REPOSITORY="luanti-wasm"
+  fi
 fi
 
-# 2. Schnellen inkrementellen Build mit Dockerfile.dev durchführen
-echo "-> Baue angepasstes Frontend und kompiliere Minetest..."
-mkdir -p "$SCRIPT_DIR/custom_frontend/static"
-docker build -t minetest-wasm-local -f Dockerfile.dev "$SCRIPT_DIR"
+IMAGE_NAME="ghcr.io/${GITHUB_REPOSITORY}-builder"
+TAG="latest"
 
-# 3. Fertiges 'www' extrahieren
-echo "-> Extrahiere 'www' Verzeichnis nach $DIST_DIR..."
-rm -rf "$DIST_DIR"
+echo "======================================================="
+echo " Bereite Custom-Dateien vor..."
+echo "======================================================="
 
-# Temporären Container erstellen
-TEMP_CONTAINER=$(docker create minetest-wasm-local)
+# Optional: Kopiere deine Custom-Frontend-Dateien temporär in das Verzeichnis,
+# das im Container gebaut wird (falls sie dort nicht eh schon liegen)
+if [ -d "./custom_frontend/static" ]; then
+  echo "=> Überschreibe originale Web-Dateien mit Custom-Frontend..."
+  cp -r ./custom_frontend/static/* ./www/static/ 2>/dev/null || true
+fi
 
-# www-Verzeichnis aus dem Container herauskopieren
-docker cp "$TEMP_CONTAINER:/minetest-wasm/www" "$DIST_DIR"
+echo "======================================================="
+echo " Starte schnellen Dev-Build im Container..."
+echo "======================================================="
 
-# Container aufräumen
-docker rm "$TEMP_CONTAINER"
+# Wir führen nur die finalen Build-Schritte aus.
+# -v mountet dein aktuelles Verzeichnis direkt als /src
+docker run --rm \
+  -v "$(pwd):/src" \
+  -w /src \
+  "${IMAGE_NAME}:${TAG}" \
+  /bin/bash -c "./build_minetest.sh && ./build_fsroot.sh && ./build_www.sh"
 
-echo "=== Build erfolgreich abgeschlossen! ==="
-echo "Die fertigen Web-Dateien liegen bereit in: $DIST_DIR"
+echo "======================================================="
+echo " Dev-Build erfolgreich! Dateien liegen lokal in www/"
+echo "======================================================="
