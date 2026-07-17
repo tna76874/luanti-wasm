@@ -15,10 +15,9 @@ IMAGE_NAME="ghcr.io/${GITHUB_REPOSITORY}-builder"
 TAG="latest"
 
 echo "======================================================="
-echo " 1/4 Suche nach fertigem Image: ${IMAGE_NAME}:${TAG}"
+echo " 1/2 Suche nach fertigem Image: ${IMAGE_NAME}:${TAG}"
 echo "======================================================="
 
-# --- 2. Versuchen das Image zu pullen, andernfalls lokal bauen ---
 if docker pull "${IMAGE_NAME}:${TAG}" 2>/dev/null; then
   echo "=> Erfolg! Fertiges Image von GitHub geladen."
 else
@@ -30,73 +29,54 @@ fi
 
 echo ""
 echo "======================================================="
-echo " 2/4 Kopiere fertiges Web-Verzeichnis (www) auf Host..."
+echo " 2/2 Kopiere fertiges Web-Verzeichnis (www) auf Host..."
 echo "======================================================="
 
-# Lösche den alten lokalen www-Ordner, falls er existiert
 rm -rf ./www
 
-# Kopiert /luanti-wasm/www aus dem Container direkt in dein lokales Verzeichnis
-docker run --rm --entrypoint "" -v "$(pwd):/host" "${IMAGE_NAME}:${TAG}" cp -r /luanti-wasm/www /host/
-
+docker run --rm --entrypoint "" \
+  --user "$(id -u):$(id -g)" \
+  -v "$(pwd):/host" \
+  "${IMAGE_NAME}:${TAG}" \
+  cp -r /minetest-wasm/www /host/
+  
 echo "=> www/ extrahiert"
 
 echo ""
 echo "======================================================="
-echo " 3/4 Erkenne Release UUID..."
+echo " Normalisiere Ordnerstruktur (UUID -> wasm)..."
 echo "======================================================="
 
-# --- 3. UUID aus der www-Verzeichnisstruktur auslesen ---
-# Erwartet: www/{12-char-uuid}/luanti.js
-RELEASE_UUID=""
-for dir in www/*/; do
+FOUND_UUID=""
+for dir in ./www/*/; do
   if [ -f "${dir}luanti.js" ]; then
-    RELEASE_UUID=$(basename "$dir")
-    echo "=> Gefundene UUID: $RELEASE_UUID"
+    FOUND_UUID=$(basename "$dir")
+    mv "$dir" "./www/wasm"
     break
   fi
 done
 
-if [ -z "$RELEASE_UUID" ]; then
-  echo "ERROR: Konnte UUID nicht ermitteln. Struktur sollte sein: www/{UUID}/luanti.js"
-  exit 1
-fi
+if [ -n "$FOUND_UUID" ]; then
+  echo "=> Ordner '$FOUND_UUID' erfolgreich in 'wasm' umbenannt."
+  
+  # 1. UUID in der index.html ersetzen
+  if [ -f "./www/index.html" ]; then
+    sed -i "s/$FOUND_UUID/wasm/g" ./www/index.html
+    echo "=> '$FOUND_UUID' in ./www/index.html erfolgreich durch 'wasm' ersetzt."
+  else
+    echo "WARNUNG: ./www/index.html wurde nicht gefunden!"
+  fi
 
-echo ""
-echo "======================================================="
-echo " 4/4 Führe Vite Frontend-Generator aus..."
-echo "======================================================="
+  # 2. RELEASE_DIR in der launcher.js anpassen
+  LAUNCHER_PATH="./www/wasm/launcher.js"
+  if [ -f "$LAUNCHER_PATH" ]; then
+    # Ersetzt die spezifische Zuweisung der alten UUID durch 'wasm'
+    sed -i "s/const RELEASE_DIR = '$FOUND_UUID';/const RELEASE_DIR = 'wasm';/g" "$LAUNCHER_PATH"
+    echo "=> RELEASE_DIR in $LAUNCHER_PATH erfolgreich auf 'wasm' gesetzt."
+  else
+    echo "WARNUNG: $LAUNCHER_PATH wurde nicht gefunden!"
+  fi
 
-# --- 4. Vite Docker Image bauen (einmalig) ---
-VITE_IMAGE="${IMAGE_NAME}-vite"
-echo "=> Baue Vite-Generator Image: ${VITE_IMAGE}:latest"
-docker build -t "${VITE_IMAGE}:latest" -f Dockerfile.vite .
-
-# --- 5. Vite Container ausführen ---
-echo "=> Vite generiert index.html mit UUID: $RELEASE_UUID"
-docker run --rm \
-  -e RELEASE_UUID="$RELEASE_UUID" \
-  -v "$(pwd)/www:/app/www:ro" \
-  -v "$(pwd)/custom_frontend/dist:/app/dist" \
-  "${VITE_IMAGE}:latest"
-
-# Kopiere Output von custom_frontend/dist nach www
-echo "=> Kopiere Vite-Output zu www/"
-if [ -d "custom_frontend/dist" ]; then
-  # Lösche alte www und ersetze mit neuem Output
-  rm -rf ./www
-  mv custom_frontend/dist ./www
 else
-  echo "ERROR: Vite-Output nicht gefunden!"
-  exit 1
+  echo "WARNUNG: Es wurde kein UUID-Ordner mit einer 'luanti.js' gefunden!"
 fi
-
-echo ""
-echo "======================================================="
-echo " ✓ Fertig! Frontend optimiert und bereit."
-echo "======================================================="
-echo "Release UUID: $RELEASE_UUID"
-echo "Output: ./www/"
-echo ""
-echo "Dateien:"
-ls -lh ./www/ | tail -5

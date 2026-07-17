@@ -1,17 +1,29 @@
-FROM node:20-slim
-
+# --- Base Stage: Node.js Umgebung einrichten ---
+FROM node:22-alpine AS base
 WORKDIR /app
 
-# Copy nur package files
-COPY custom_frontend/package.json ./
+# Systemabhängigkeiten (falls benötigt) und Paketdateien kopieren
+COPY package.json ./
 
-# Install dependencies (erzeugt auch package-lock.json)
-RUN npm install --no-progress
+# Abhängigkeiten installieren
+RUN npm install
 
-# Copy source
-COPY custom_frontend/src ./src
+# Gesamtes Projektverzeichnis kopieren
+COPY . .
 
-# Default: www wird zur runtime gemountet
-ENV RELEASE_UUID=dev
+# --- Development Stage ---
+# Wird aufgerufen, wenn wir lokal entwickeln wollen
+FROM base AS development
+EXPOSE 3000
+CMD ["npm", "run", "dev", "--", "--host"]
 
-ENTRYPOINT ["npm", "run", "build"]
+# --- Build Stage ---
+# Wird aufgerufen, um die statischen Dateien zu generieren
+FROM base AS builder
+RUN npm run build
+
+# Die letzte Stage ist minimal, um die fertigen Dateien per Volume herauszuholen
+FROM alpine:latest AS exporter
+WORKDIR /dist
+COPY --from=builder /app/dist /dist
+CMD ["cp", "-a", "/dist/.", "/output/"]
