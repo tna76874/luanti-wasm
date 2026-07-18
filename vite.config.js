@@ -4,18 +4,6 @@ import { viteStaticCopy } from 'vite-plugin-static-copy';
 export default defineConfig({
   base: './',
   
-  plugins: [
-    viteStaticCopy({
-      targets: [
-        {
-          // Spiegelt den kompletten www-Inhalt in die Root des Dev-Servers / Builds
-          src: 'www/*',
-          dest: '.'
-        }
-      ]
-    })
-  ],
-
   server: {
     port: 3000,
     host: true, // Wichtig für Docker
@@ -39,6 +27,10 @@ export default defineConfig({
         {
           src: 'www/wasm/*',
           dest: 'wasm'
+        },
+        {
+          src: 'www/coi-serviceworker.js',
+          dest: '.'
         }
       ]
     })

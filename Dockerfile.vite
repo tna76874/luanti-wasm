@@ -11,6 +11,8 @@ RUN npm install
 # Gesamtes Projektverzeichnis kopieren
 COPY . .
 
+RUN wget -O /app/www/coi-serviceworker.js https://raw.githubusercontent.com/gzuidhof/coi-serviceworker/refs/heads/master/coi-serviceworker.js
+
 # --- Development Stage ---
 # Wird aufgerufen, wenn wir lokal entwickeln wollen
 FROM base AS development
