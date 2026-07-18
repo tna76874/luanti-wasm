@@ -62,6 +62,27 @@
           </select>
         </div>
 
+        <div class="space-y-2">
+          <label for="input_port" class="block text-xs font-semibold uppercase tracking-wider text-slate-400">
+            Server Port
+          </label>
+          <input type="number" id="input_port" value="33631" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-slate-200 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition">
+        </div>
+
+        <div class="space-y-2">
+          <label for="input_username" class="block text-xs font-semibold uppercase tracking-wider text-slate-400">
+            Spielername
+          </label>
+          <input type="text" id="input_username" placeholder="Dein Name" maxlength="19" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-slate-200 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition">
+        </div>
+
+        <div class="space-y-2">
+          <label for="input_password" class="block text-xs font-semibold uppercase tracking-wider text-slate-400">
+            Passwort
+          </label>
+          <input type="password" id="input_password" placeholder="Passwort eingeben..." class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-slate-200 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition">
+        </div>
+
         <!-- Trennlinie & Launch Button -->
         <div class="pt-4 border-t border-slate-850">
           <button id="launch" class="w-full bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 font-bold text-lg py-4 px-6 rounded-xl shadow-lg shadow-emerald-500/10 hover:shadow-emerald-400/20 active:scale-[0.98] transition transform duration-155">
@@ -124,10 +145,32 @@
           launch.addEventListener('click', () => {
               const proxyIndex = document.getElementById('select_proxy').value;
               const proxy = proxies[proxyIndex][0];
+              const port = document.getElementById('input_port').value;
+              const username = document.getElementById('input_username').value;
+              const password = document.getElementById('input_password').value;
+
+              if (!username || username.trim() === "") {
+                  alert("Bitte gib einen Benutzernamen ein!");
+                  return;
+              }
+
               wipePage();
               mtl.setProxy(proxy);
               mtl.setLang(select_language.value);
-              mtl.launch(args);
+              
+              if (mtl.setPassword) {
+                  mtl.setPassword(password);
+              } else {
+                  args.password = password;
+              }
+              
+              const launchArgs = args; 
+              launchArgs.address = 'space.blockalot.de';
+              launchArgs.port = parseInt(port);
+              launchArgs.name = username;
+              launchArgs.go = true;
+              
+              mtl.launch(launchArgs);
           });
       }
 
