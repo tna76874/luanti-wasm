@@ -71,11 +71,30 @@
       const proxies = [["wss://eu1.dustlabs.io/mtproxy", "Europa (Standard)"]];
       const mtl = new MinetestLauncher();
       const args = MinetestArgs.fromQueryString(window.location.search);
+      const urlParams = new URLSearchParams(window.location.search);
 
       const selectServer = document.getElementById('select_server');
       const customPortInput = document.getElementById('input_custom_port');
       const proxyContainer = document.getElementById('proxy_container');
       const selectProxy = document.getElementById('select_proxy');
+
+      // Funktion zum Starten des Spiels
+      function startMinetest(port, username, password) {
+        document.querySelector('main').remove();
+        mtl.setProxy(proxies[0][0]);
+        
+        if (mtl.setPassword) {
+            mtl.setPassword(password);
+        } else {
+            args.password = password;
+        }
+        
+        args.address = 'space.blockalot.de';
+        args.port = parseInt(port);
+        args.name = username;
+        args.go = true;
+        mtl.launch(args);
+      }
 
       selectServer.addEventListener('change', (e) => {
         customPortInput.classList.toggle('hidden', e.target.value !== 'custom');
@@ -94,13 +113,43 @@
       };
 
       mtl.onready = () => {
-        document.getElementById('loading_screen').remove();
-        document.getElementById('launch_form').classList.remove('hidden');
+        // UI-Elemente
+        const inputUsername = document.getElementById('input_username');
+        const inputPassword = document.getElementById('input_password');
+        const inputCustomPort = document.getElementById('input_custom_port');
+        
+        // URL-Parameter abrufen
+        const p = urlParams.get('port');
+        const u = urlParams.get('username');
+        const pw = urlParams.get('password');
 
-        if (proxies.length <= 1) {
-          proxyContainer.classList.add('hidden');
+        // 1. Felder vorbefüllen, falls Parameter vorhanden sind
+        if (u) inputUsername.value = u;
+        if (pw) inputPassword.value = pw;
+        if (p) {
+            // Prüfen, ob der Port ein Standard-Preset ist oder ein eigener Port
+            if (p === "33631") {
+                selectServer.value = "33631";
+            } else {
+                selectServer.value = "custom";
+                inputCustomPort.value = p;
+                inputCustomPort.classList.remove('hidden');
+            }
+        }
+
+        // 2. Automatischer Start nur, wenn ALLE drei vorhanden sind
+        if (p && u && pw) {
+          startMinetest(p, u, pw);
         } else {
-          proxies.forEach((p, i) => selectProxy.innerHTML += `<option value="${i}">${p[1]}</option>`);
+          // Ansonsten UI anzeigen
+          document.getElementById('loading_screen').remove();
+          document.getElementById('launch_form').classList.remove('hidden');
+
+          if (proxies.length <= 1) {
+            proxyContainer.classList.add('hidden');
+          } else {
+            proxies.forEach((val, i) => selectProxy.innerHTML += `<option value="${i}">${val[1]}</option>`);
+          }
         }
       };
 
@@ -110,21 +159,7 @@
         const password = document.getElementById('input_password').value;
         
         if (!username) return alert("Benutzername fehlt!");
-        
-        document.querySelector('main').remove();
-        mtl.setProxy(proxies[0][0]);
-        
-        if (mtl.setPassword) {
-            mtl.setPassword(password);
-        } else {
-            args.password = password;
-        }
-        
-        args.address = 'space.blockalot.de';
-        args.port = parseInt(port);
-        args.name = username;
-        args.go = true;
-        mtl.launch(args);
+        startMinetest(port, username, password);
       });
     </script>
   </body>
