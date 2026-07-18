@@ -48,6 +48,12 @@ jobs:
           chmod +x ./build.sh
           ./build.sh
 
+      - name: Ensure permissions
+        run: |
+          sudo mkdir -p ./dist
+          sudo chown -R $USER:$USER ./dist
+          sudo chown -R $USER:$USER ./www
+
       - name: Build Vite Site
         run: |
           chmod +x ./build_vite.sh
