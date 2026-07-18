@@ -105,3 +105,11 @@ if [ -n "$FOUND_UUID" ]; then
 else
   echo "WARNUNG: Es wurde kein UUID-Ordner mit einer 'luanti.js' gefunden!"
 fi
+
+if [ ! -f "./www/coi-serviceworker.js" ]; then
+    echo "=> Lade coi-serviceworker.js herunter..."
+    wget -q -O ./www/coi-serviceworker.js https://raw.githubusercontent.com/gzuidhof/coi-serviceworker/refs/heads/master/coi-serviceworker.js
+    echo "=> coi-serviceworker.js erfolgreich heruntergeladen."
+else
+    echo "=> coi-serviceworker.js existiert bereits, überspringe Download."
+fi
