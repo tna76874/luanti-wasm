@@ -6,7 +6,7 @@ FORCE_BUILD=false
 
 # --- 0. Argumente mit getopts parsen ---
 while getopts "f" opt; do
-  case [ "$opt" ] in
+  case "$opt" in
     f)
       FORCE_BUILD=true
       ;;

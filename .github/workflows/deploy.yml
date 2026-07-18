@@ -6,11 +6,7 @@ on:
       - master
       - main
       - stable
-    paths-ignore:
-      - 'build_docker.sh'
-      - '.github/workflows/docker.yml'
-      - 'Dockerfile.base'
-
+    # Wir entfernen paths-ignore, damit er bei JEDEM Push startet
   workflow_run:
     workflows: ["Build Docker Image"]
     types:
@@ -27,21 +23,30 @@ permissions:
   contents: read
   pages: write
   id-token: write
+  actions: read # Erforderlich für die Abfrage des Docker-Build-Status
 
 jobs:
   deploy-pages:
     runs-on: ubuntu-latest
-    if: |
-      github.event_name == 'push' || 
-      (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success')
-    
     steps:
       - uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 'current'
+      - name: Wait for Docker Build if running
+        if: github.event_name == 'push'
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          RUNNING=$(gh run list --workflow "Build Docker Image" --status in_progress --json databaseId -q '.[].databaseId' || echo "")
+          if [ -n "$RUNNING" ]; then
+            echo "Docker Build läuft (ID: $RUNNING). Warte..."
+            gh run watch $RUNNING
+          fi
+
+      - name: Build WASM assets
+        run: |
+          chmod +x ./build.sh
+          ./build.sh
 
       - name: Build Vite Site
         run: |
