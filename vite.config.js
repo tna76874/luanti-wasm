@@ -29,6 +29,18 @@ export default defineConfig({
 
   build: {
     outDir: 'dist',
-    assetsInlineLimit: 0,
-  }
+    rollupOptions: {
+      external: ['**/wasm/launcher.js'] 
+    }
+  },
+  plugins: [
+    viteStaticCopy({
+      targets: [
+        {
+          src: 'www/wasm/*',
+          dest: 'wasm'
+        }
+      ]
+    })
+  ]
 });
