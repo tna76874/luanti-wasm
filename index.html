@@ -39,11 +39,9 @@
         <div id="proxy_container" class="space-y-2">
           <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400">Netzwerk-Proxy</label>
           <select id="select_proxy" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-slate-200 focus:outline-none focus:border-emerald-500"></select>
-          <!-- Warnbox -->
           <div id="proxy_warning" class="hidden bg-amber-500/10 border border-amber-500/50 p-3 rounded-xl text-amber-500 text-xs leading-relaxed">
             ⚠️ <strong>Vorsicht:</strong> Dieser Proxy wird von einer Drittpartei betrieben. Deine Zugangsdaten und dein gesamter Spielverkehr sind für den Betreiber potenziell einsehbar. Nutze für sensible Accounts nur vertrauenswürdige Proxys.
           </div>
-          <!-- Lokaler Proxy Download-Hinweis (Modernisiert & Fancier) -->
           <div id="local_proxy_download" class="hidden pt-1">
             <a href="https://github.com/tna76874/luanti-wasm-proxy-go/releases" target="_blank" rel="noopener noreferrer" class="group relative flex items-center justify-between w-full p-3.5 bg-slate-950 border border-slate-800 hover:border-emerald-500/50 rounded-xl shadow-lg transition-all duration-300 overflow-hidden">
               <div class="absolute inset-0 bg-gradient-to-r from-emerald-500/10 to-teal-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
@@ -98,8 +96,14 @@
 
       const urlParams = new URLSearchParams(window.location.search);
       const showUnsafe = urlParams.get('unsafe') === '1';
+      const showLocal = urlParams.get('local') === '1';
 
-      const proxies = allProxies.filter(p => showUnsafe || p.trusted);
+      const proxies = allProxies.filter(p => {
+        if (showUnsafe) return true;
+        if (!p.trusted) return false;
+        if (p.isLocal && !showLocal) return false;
+        return true;
+      });
 
       const mtl = new MinetestLauncher();
       const args = MinetestArgs.fromQueryString(window.location.search);
