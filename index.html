@@ -43,6 +43,12 @@
           <div id="proxy_warning" class="hidden bg-amber-500/10 border border-amber-500/50 p-3 rounded-xl text-amber-500 text-xs leading-relaxed">
             ⚠️ <strong>Vorsicht:</strong> Dieser Proxy wird von einer Drittpartei betrieben. Deine Zugangsdaten und dein gesamter Spielverkehr sind für den Betreiber potenziell einsehbar. Nutze für sensible Accounts nur vertrauenswürdige Proxys.
           </div>
+          <!-- Lokaler Proxy Download-Hinweis -->
+          <div id="local_proxy_download" class="hidden pt-1">
+            <a href="https://github.com/tna76874/luanti-wasm-proxy-go/releases" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1.5 text-xs text-emerald-400 hover:text-emerald-300 transition underline underline-offset-4">
+              <span>📥 Lokalen Proxy herunterladen</span>
+            </a>
+          </div>
         </div>
 
         <div class="space-y-2">
@@ -72,28 +78,36 @@
 
     <script type="text/javascript" src="wasm/launcher.js"></script>
     <script type="text/javascript">
-      const proxies = [
-        { url: "wss://proxy.luanti.einstein-gym.eu", name: "AEG", trusted: true },
-        { url: "ws://localhost:8080", name: "Lokaler Proxy (Port 8080)", trusted: true },
-        { url: "wss://eu1.dustlabs.io/mtproxy", name: "Europa (Drittanbieter)", trusted: false }
+      const allProxies = [
+        { url: "wss://proxy.luanti.einstein-gym.eu", name: "AEG", trusted: true, isLocal: false },
+        { url: "ws://localhost:8080", name: "Lokaler Proxy", trusted: true, isLocal: true },
+        { url: "wss://eu1.dustlabs.io/mtproxy", name: "Drittanbieter", trusted: false, isLocal: false }
       ];
+
+      const urlParams = new URLSearchParams(window.location.search);
+      const showUnsafe = urlParams.get('unsafe') === '1';
+
+      const proxies = allProxies.filter(p => showUnsafe || p.trusted);
 
       const mtl = new MinetestLauncher();
       const args = MinetestArgs.fromQueryString(window.location.search);
-      const urlParams = new URLSearchParams(window.location.search);
 
       const selectServer = document.getElementById('select_server');
       const customPortInput = document.getElementById('input_custom_port');
       const proxyContainer = document.getElementById('proxy_container');
       const selectProxy = document.getElementById('select_proxy');
       const proxyWarning = document.getElementById('proxy_warning');
+      const localProxyDownload = document.getElementById('local_proxy_download');
 
-      function updateProxyWarning() {
-        const isTrusted = proxies[selectProxy.value].trusted;
-        proxyWarning.classList.toggle('hidden', isTrusted);
+      function updateProxyUI() {
+        const selectedProxy = proxies[selectProxy.value];
+        if (!selectedProxy) return;
+        
+        proxyWarning.classList.toggle('hidden', selectedProxy.trusted);
+        localProxyDownload.classList.toggle('hidden', !selectedProxy.isLocal);
       }
 
-      selectProxy.addEventListener('change', updateProxyWarning);
+      selectProxy.addEventListener('change', updateProxyUI);
 
       proxies.forEach((p, i) => {
         const option = document.createElement('option');
@@ -101,6 +115,8 @@
         option.text = `${p.name} ${p.trusted ? '' : '⚠️'}`;
         selectProxy.appendChild(option);
       });
+
+      updateProxyUI();
 
       function startMinetest(port, username, password) {
         const proxy = proxies[selectProxy.value];
