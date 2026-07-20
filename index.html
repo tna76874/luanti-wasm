@@ -43,10 +43,22 @@
           <div id="proxy_warning" class="hidden bg-amber-500/10 border border-amber-500/50 p-3 rounded-xl text-amber-500 text-xs leading-relaxed">
             ⚠️ <strong>Vorsicht:</strong> Dieser Proxy wird von einer Drittpartei betrieben. Deine Zugangsdaten und dein gesamter Spielverkehr sind für den Betreiber potenziell einsehbar. Nutze für sensible Accounts nur vertrauenswürdige Proxys.
           </div>
-          <!-- Lokaler Proxy Download-Hinweis -->
+          <!-- Lokaler Proxy Download-Hinweis (Modernisiert & Fancier) -->
           <div id="local_proxy_download" class="hidden pt-1">
-            <a href="https://github.com/tna76874/luanti-wasm-proxy-go/releases" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1.5 text-xs text-emerald-400 hover:text-emerald-300 transition underline underline-offset-4">
-              <span>📥 Lokalen Proxy herunterladen</span>
+            <a href="https://github.com/tna76874/luanti-wasm-proxy-go/releases" target="_blank" rel="noopener noreferrer" class="group relative flex items-center justify-between w-full p-3.5 bg-slate-950 border border-slate-800 hover:border-emerald-500/50 rounded-xl shadow-lg transition-all duration-300 overflow-hidden">
+              <div class="absolute inset-0 bg-gradient-to-r from-emerald-500/10 to-teal-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+              <div class="relative flex items-center gap-3">
+                <div class="w-9 h-9 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 group-hover:scale-110 transition-transform duration-300">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                </div>
+                <div>
+                  <p class="text-xs font-semibold text-slate-200 group-hover:text-emerald-400 transition-colors">Lokaler Proxy benötigt?</p>
+                  <p class="text-[11px] text-slate-400">Release auf GitHub herunterladen</p>
+                </div>
+              </div>
+              <span class="relative text-xs font-bold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-3 py-1.5 rounded-lg group-hover:bg-emerald-500 group-hover:text-slate-950 transition-all duration-300">
+                Download
+              </span>
             </a>
           </div>
         </div>
